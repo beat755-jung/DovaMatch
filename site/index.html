@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DovaMatch - DoVA Faculty</title>
+<style>
+  body { margin: 0; font-family: -apple-system, Segoe UI, sans-serif; display: flex; height: 100vh; }
+  #list { width: 280px; overflow-y: auto; border-right: 1px solid #ddd; background: #fafafa; }
+  #list button {
+    display: block; width: 100%; text-align: left; padding: 12px 16px;
+    border: none; border-bottom: 1px solid #eee; background: none; cursor: pointer; font-size: 14px;
+  }
+  #list button:hover, #list button.active { background: #e8ecff; }
+  #list button.info-btn { font-weight: 600; background: #eef1ff; }
+  #list .divider { border-bottom: 2px solid #ccc; }
+  #detail { flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .detail-grid { display: flex; gap: 40px; align-items: flex-start; }
+  .detail-text { flex: 1 1 50%; min-width: 0; }
+  .detail-image { flex: 1 1 50%; min-width: 0; position: sticky; top: 32px; }
+  .detail-image img { width: 100%; height: auto; border-radius: 8px; display: block; }
+  .detail-text h1 { margin-top: 0; }
+  .meta { color: #555; margin-bottom: 4px; }
+  .bio { margin-top: 20px; line-height: 1.7; white-space: pre-wrap; }
+  .events { margin-top: 24px; }
+  .event { margin-bottom: 12px; padding: 10px 14px; background: #f4f4f8; border-radius: 6px; }
+  a { color: #3b53d8; }
+  .placeholder { color: #888; }
+  .info-page section { margin-bottom: 32px; max-width: 900px; }
+  .info-page h2 { border-bottom: 2px solid #eee; padding-bottom: 6px; }
+  .info-page table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .info-page th, .info-page td { text-align: left; padding: 10px 12px; border: 1px solid #e0e0e0; vertical-align: top; white-space: pre-line; }
+  .info-page th { background: #f4f4f8; }
+  .info-page .tip { color: #666; font-size: 13px; }
+  .score-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .score-card { background: #f4f4f8; border-radius: 8px; padding: 12px 18px; min-width: 100px; }
+  .score-card .label { font-size: 12px; color: #666; }
+  .score-card .value { font-size: 20px; font-weight: 700; }
+  @media (max-width: 800px) {
+    .detail-grid { flex-direction: column; }
+    .detail-image { position: static; }
+  }
+</style>
+</head>
+<body>
+<div id="list"></div>
+<div id="detail"><p class="placeholder">왼쪽에서 교수를 선택하세요.</p></div>
+<script id="faculty-data" type="application/json">[{"name": "Mari Eastman", "title": "Faculty", "url": "https://dova.uchicago.edu/people/mari-eastman", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2024-02/MEA-23-20_M1A3181_header3_0.jpg?itok=6IA_jVS6", "email": "marieastman@uchicago.edu", "office": "Logan Center 240", "teaching_since": "Teaching at UChicago since 2024", "homepage": "", "bio": "Mari Eastman (b.1970, San Francisco, CA) holds an MFA from the School of the Art Institute of Chicago and a BA from Smith College. She has been in exhibitions at the Hammer Museum, Los Angeles, the Berkeley Museum of Art, and had solo shows at Los Angeles Contemporary Exhibitions, Sprüth and Magers Projekte, among others. Recent solo shows include The Green Gallery in Milwaukee and Bombon Projects in Barcelona, Spain. Her work has been reviewed in the New York Times, Artforum.com, and featured in Contemporary Art Daily. Eastman lives and works in Chicago and is on the faculty at DoVA at the University of Chicago.", "events": []}, {"name": "Matthew Jesse Jackson", "title": "Professor, Visual Arts, Professor, Art History", "url": "https://dova.uchicago.edu/people/matthew-jesse-jackson", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2025-02/22POPEL1-superJumbo.jpg?itok=qhzXlvXx", "email": "", "office": "Logan Center 236", "teaching_since": "", "homepage": "", "bio": "Matthew Jesse Jackson teaches courses grounded primarily in the contemplation of cultural experience since 1945.  Jackson’s most recent monograph, Il’ia i Emiliia Kabakovy: Gde nashe mesto? [Ilya and Emilia Kabakov: Where Is Our Place?] (Moscow: Breus Foundation, 2019), presents a comprehensive Russian-language survey of Russia’s most famous living artists.  Jackson is also the editor and co-translator from the Russian of Ilya Kabakov: On Art (University of Chicago Press, 2018), the definitive collection of Kabakov’s writings in English, and the author of The Experimental Group: Ilya Kabakov, Moscow Conceptualism, Soviet Avant-Gardes (University of Chicago Press, 2010; new paperback edition, 2016), winner of the Robert Motherwell Book Award from The Dedalus Foundation for outstanding publication in the history and criticism of modernism in the arts, as well as the Vucinich Book Prize for the most important contribution to Russian, Eurasian, and East European studies in any discipline of the humanities or social sciences from the Association for Slavic, East European, and Eurasian Studies; the prize citation reads, in part: “ Matthew Jesse Jackson's The Experimental Group is an engaging, beautifully written, and erudite study of unofficial Soviet art. It provides brilliant readings of numerous individual drawings, albums, mixed media work, and installations…[T]his monumental study of creativity in and after the late Soviet period is a remarkable scholarly achievement.” The volume was also named runner-up for Book of the Year in art history and criticism at the American Publishers (PROSE) Awards and placed on the short list for Book of the Year by the American Association of Teachers of Slavic and East European Languages (AATSEEL). Jackson earned a Ph.D. in History of Art from the University of California, Berkeley, thanks to Anne M. Wagner and T.J. Clark, and is also A.B.D. in Russian Literature, having been awarded M.Phil. and M.A. degrees from Columbia University, where he studied as a President’s Fellow. He graduated Phi Beta Kappa summa cum laude with a B.A. in French and German from the Florida State University.", "events": []}, {"name": "Laura Letinsky", "title": "Professor, Visual Arts", "url": "https://dova.uchicago.edu/people/laura-letinsky", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2019-08/RNToWantForNothing02-Proof_0.jpg?itok=1TgLMMNi", "email": "", "office": "Logan Center 240", "teaching_since": "Teaching at UChicago since 1994", "homepage": "http://lauraletinsky.com/", "bio": "A BFA from the University of Manitoba, Winnipeg, Canada, and a MFA in Photography from Yale University’s School of Art, Laura Letinsky has been a Professor at the University of Chicago since 1994. She shows with Yancey Richardson Gallery, NYC, and Document, Chicago and Lisbon, and exhibits internationally including PhotoEspana, Madrid, Museum of Modern Art, NYC, Mumbai Photography Festival, Mumbai, India, MIT, Cambridge, MA,Basel Design, The Photographers Gallery, London, and , Denver Art Museum, CO. Awards include the Maison Dora Maar Residency, France; Canada Council International Residency, Kunstlerhaus Bethanien Residency, Berlin, The Canada Council Project Grants, The Anonymous Was a Woman Award, and the John Simon Guggenheim Fellowship, and her work is published in monographs and catalogues such as To Want For Nothing , Roman Nvmerals, 2019, Time’s Assignation , Radius Books, 2017, Ill Form and Void Full , Radius Books, 2014, Feast , Smart Museum of Art, UC Press, 2013, After All , Damiani, 2010, Hardly More Than Ever , Renaissance Society, 2004, Blink , Phaidon Press, 2002, and Venus Inferred , University of Chicago Press, 2000. lauraletinsky.com", "events": []}, {"name": "Geof Oppenheimer", "title": "Associate Professor of Practice, Visual Arts", "url": "https://dova.uchicago.edu/profiles/geof-oppenheimer", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2022-03/011_GO.JPG?itok=8ZfOE05F", "email": "", "office": "Logan Center 239", "teaching_since": "", "homepage": "http://inthisdayandage.net/", "bio": "Geof Oppenheimer’s practice takes up questions about the negotiation of civic value and how meaning is formed (and fails) in the modern world.  Starting from the proposition that formal value is a social value, his projects interrogate the forms and rules of civic discourse as a material, positing art as a space of liberated social dialogue. Trained as a sculptor, Oppenheimer works across multiple mediums including stage set video productions and photography. His work has been exhibited nationally and internationally at venues such as the CRP in France, the Mary and Leigh Block Museum of Art, UCCA, Bejing, PS1/MOMA, The Contemporary Museum, Baltimore; The Museum of Contemporary Art, Chicago, SITE Santa Fe, The Indianapolis Museum of Art, The Aspen Art Museum, The 4th Athens Biennale, The Institute for Contemporary Art in Richmond, Virginia and the CAB Art Center, Brussels. His work has been the subject of published writings in Art in America, The Wall Street Journal, The Chicago Tribune and The New Yorker. He studied at the Maryland Institute, College of Art where he received his BFA and received an MFA from the University of California, Berkeley. He also studied at the Academia voor Beeldende Vorming in the Netherlands. Geof Oppenheimer is an Associate Professor of Practice in the Department of Visual Arts at the University of Chicago and lives and works in Chicago, Illinois. inthisdayandage.net", "events": []}, {"name": "Julia Phillips", "title": "Assistant Professor, Visual Arts", "url": "https://dova.uchicago.edu/people/julia-phillips", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2019-09/J-Phillips_Witness_I-III_DoVA-web.jpg?itok=cZMgImpf", "email": "juliaphillips@uchicago.edu", "office": "Logan Center 240", "teaching_since": "Teaching at UChicago since 2018", "homepage": "", "bio": "Alongside works on paper and videos, Julia Phillips works primarily with ceramics and metal, creating sculptures reminiscent of functional objects. Her works are metaphors for social and psychological experiences, metaphors that are both mechanical and bodily, and that typically focus on experiences of power relations between individuals or between an individual and an institution. Julia Phillips (b. 1985) was born in Hamburg and lives and works in Chicago and Berlin. She has had solo exhibitions at MoMA PS1 in New York and Kunstverein Braunschweig, and was featured in the Berlin Biennial, the New Museum Triennial, the Venice Biennial, and the Whitney Biennial. Her work has been shown at museums including the Museum of Fine Arts in Boston, the Museum Brandhorst in Munich, the Museu de Arte de São Paulo, and the Studio Museum in Harlem. Her work is held in numerous public collections including the Art Institute of Chicago, the Museum MMK für Moderne Kunst in Frankfurt a. M., the Moderna Museet in Stockholm, and the Museum of Modern Art New York. Julia Phillips recently completed her first public art work commission titled Observer, Observed for the NY High Line and published her first monograph titled “Energy Exchange” with Mousse Publishing, Milan. 'Reach Everyone on the Planet…' — Kimberlé Crenshaw and Intersectionality , text contribution 'Can We Get a Witness?' from Julia Phillips, published by Gunda-Werner-Institute in the Heinrich Böll Foundation, in cooperation with the Center for Intersectional Justice, 2019 Review of Solo Exhibition ' Failure Detection ' at MoMA PS1, Sculpture Magazine, Jan/Feb 2019, issue by Jonathan Goodman, 2019 Review of Solo Exhibition ' Failure Detection ' at MoMA PS1, Zack Hatfield, Artforum , September 2018 issue, Vol. 57, No. 1 , 2018 \"In Minimalism Everything Counts\", Interview with Will Furtado, Contemporary& Magazine , Print Issue #9 , 2018 \"Do You Believe in Evil?\", In Conversation with Aaron Gilbert, Mousse Magazine, Issue 62 , 2018 \"New Album\" , Solo, Matthew Marks Gallery, NYC, 2020 \"Fake Truth\" , Solo, Kunstverein Braunschweig, Germany, 2019 \"Failure Detection\" , Solo, MoMA PS1, New York City, USA, 2018 \"Feminist Histories: Artists After 2000\" , Group, MASP, São Paulo, Brasil, 2019 \"Performing Society: The Violence of Gender\" , Group, Tai Kwun Art Center, Hong Kong, China, 2019 \"We don’t need another hero\" , Group, 10th Berlin Biennale, Berlin, Germany, 2018 \"Songs for Sabotage\" , Group, New Museum Triennial, New York City, USA, 2018", "events": []}, {"name": "Tongji Philip Qian 钱同济", "title": "Harper-Schmidt Fellow, Collegiate Assistant Professor, Visual Arts", "url": "https://dova.uchicago.edu/people/tongji-philip-qian-qiantongji", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2023-09/DSC_7277.JPG?itok=t4rJ6eSu", "email": "qiantjp@uchicago.edu", "office": "Logan Center 239", "teaching_since": "", "homepage": "", "bio": "Tongji Philip Qian 钱同济 is a multidisciplinary artist and the co-founder of TPQ Studio. His artistic practice extends the limit of artmaking through conceptual lenses such as speed, labor, internationalism, and immigration. Rooted in images and words, Qian’s research investigates knowledge production in contemporary art with a scholarly focus on movements such as Minimalism, Post-Minimalism, and Conceptual art. His recent projects include No-risk Hour (2019-), Neighborly Passport Keep Right Except To Pass (2023), Questionnairing Reality (2021) , and Art Beside a Single Handshake (2020). Qian’s drawings and paintings are represented in several permanent collections, including the RISD Museum, Mecklenburgisches Künstlerhaus Schloss Plüschow, and the Yangdeng Art Museum, whereas his artist books are housed in a large number of public collections, such as Special Collections at Smith College, Special Collections at the Center for Curatorial Studies Library and Archives at Bard College, Booth Family Center for Special Collections at Georgetown University, Center for Book Arts in New York, and Asia Art Archive in America. Qian earned dual B.A. degrees in Art History and Mathematics from Carleton College, an Advanced Graduate Certificate in Studio Art from New York University, and an M.F.A. from the Rhode Island School of Design. He has held teaching positions at Bard College and RISD, and currently serves as a Collegiate Assistant Professor in the Department of Visual Arts and a Harper-Schmidt Fellow in the Society of Fellows, both at the University of Chicago. In spring 2024, Qian inaugurated the State VIII Project (2024-2027), a quasi research-driven project space within his office studio at the Hyde Park Art Center in Chicago. The initiative features a series of two-person exhibitions, having highlighted works by Sol LeWitt, McKinzie Trotta, Wang Langgou, Dasha Shishkin, Braden Bandel, Save the Chimps, Grappa, and Jonathan Monk. In conjunction with the exhibitions, Qian also founded the State VIII Project Artist and Writer Residency Program , a free-of-charge experience offering creative professionals uninterrupted time and space to consider their work.", "events": [{"title": "Tongji Philip Qian: Alloyed Commitments", "url": "https://dova.uchicago.edu/events/tongji-philip-qian-alloyed-commitments", "date": "24 October 2025 6:00PM", "host": "Logan Center Exhibitions", "location": "Logan Center for the Arts"}, {"title": "Reiko Tomii: “Thinking Operationally”", "url": "https://dova.uchicago.edu/events/reiko-tomii-thinking-operationally", "date": "15 May 2024 4:45PM", "host": "VMPEA", "location": "Cochrane-Woods Art Center, Room 152"}, {"title": "Tongji Philip Qian: \"The Diary of An Encounter Which Seemed to Have Never Happened\"", "url": "https://dova.uchicago.edu/events/tongji-philip-qian-diary-encounter-which-seemed-have-never-happened", "date": "12 February 2024 6:00PM", "host": "Open Practice Committee", "location": "Logan Center for the Arts"}]}, {"name": "Jason Salavon", "title": "Associate Professor, Visual Arts", "url": "https://dova.uchicago.edu/people/jason-salavon", "image": "https://salavon.com/site_media/projects/todem/openseaLogo.png", "email": "", "office": "Logan Center 239", "teaching_since": "", "homepage": "http://salavon.com/", "bio": "Using software processes of his own design, Jason Salavon generates and reconfigures masses of communal material in an effort to present new perspectives on the familiar. His projects unearth unexpected pattern while exploring the relationship between the part and the whole or the individual and the group. Reflecting a natural attraction to popular culture and the day-to-day, his work regularly incorporates the use of common references and source material. The final compositions are exhibited as art objects, such as photographic prints and video installations, while others exist in a real-time software context. Born in Indiana, raised in Texas, and based in Chicago, Salavon earned his MFA at The School of the Art Institute of Chicago and his BA from The University of Texas at Austin. His work has been shown in museums and galleries around the world. Reviews of his exhibitions have been included in such publications as Artforum, Art in America, The New York Times, and The Wall Street Journal. Examples of his artwork are included in numerous prominent public and private collections. He is currently an Associate Professor in Visual Arts and Faculty in the Computation Institute, at the University of Chicago. He was also employed for numerous years as an artist and programmer in the video game industry. salavon.com", "events": []}, {"name": "Catherine Sullivan", "title": "Professor, Visual Arts", "url": "https://dova.uchicago.edu/people/catherine-sullivan", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2019-09/Sullivan_Header_ForWeb_0.jpg?itok=T0mNIoGP", "email": "", "office": "Logan Center 240", "teaching_since": "", "homepage": "", "bio": "Catherine Sullivan has created film, theater, and installation work nationally and internationally. The performers in her works are often coping with written texts, stylistic economies, re-enactments of historic performances, gestural and choreographic regimes, and conceptual orthodoxies. Her true medium is the ensemble itself. Solo exhibitions, collaborations, performances and films have been presented at venues such as UCLA Armand Hammer Museum, Los Angeles; Walker Art Center, Minneapolis; The Renaissance Society at the University of Chicago; Museum of Contemporary Art, Chicago; Whitney Museum of American Art, New York; Metro Pictures, New York; Galerie Catherine Bastide, Brussels, Galerie Christian Nagel, Cologne; Secession, Vienna; Tate Modern, London; Opéra de Lyon, Lyon; Volksbühne, Berlin; Cricoteka, Krakow; Trapdoor Theatre, Chicago; the Whitney, Moscow and Gwangju biennials; Berlin International Film Festival and International Film Festival Rotterdam. Her work is held in public and private collections including Museum of Contemporary Art, Los Angeles; Whitney Museum of American Art, New York; Tate Modern, London; Thyssen-Bornemisza Art Contemporary, Vienna; Rubell Family Foundation, Miami and Geotz Collection, Munich. Notable awards include The Louis Comfort Tiffany Foundation, Herb Alpert Award in the Arts, Deutscher Akademischer Austausch Dienst, United States Artists Walker Fellowship and a Chicago Dancemaker’s Forum Lab Artist Award. She holds a BFA in acting from California Institute of the Arts and an MFA in post-studio art from Art Center College of Design. She is a Professor in the Department of Visual Arts at the University of Chicago.", "events": []}, {"name": "Anna Martine Whitehead", "title": "Faculty", "url": "https://dova.uchicago.edu/people/anna-martine-whitehead", "image": "https://dova.uchicago.edu/sites/default/files/styles/header_image/public/2025-12/SPREAD_Luna_LinksHall_17_smaller.jpg?itok=XhFblYKs", "email": "", "office": "Logan Center 240", "teaching_since": "Teaching at UChicago since 2025", "homepage": "", "bio": "Anna Martine Whitehead does performance from the homelands of the Council of the Three Fires; as well as the Miami, Ho-Chunk, Sauk and Meskwaki; the Kiikaapoi, Peoria, and the Očeti Šakówiŋ Nations. They hold an MFA in Social Practice from California College of the Arts and a BA in fine art with a certificate in Black Women’s Studies from the University of Maryland. Their work attends to queer and black temporalities, insurgent architectures, prison culture, and legacies of critical fabulation. Their solo and collaborative work has been presented by the Chicago Museum of Contemporary Art, REDCAT, Portland Institute for Contemporary Art, Chicago Symphony Orchestra, the Museum of Modern Art, and Yerba Buena Center for the Arts. Martine and her work have been recognized by United States Artists, the New England Foundation for the Arts, National Performance Network, the Graham Foundation, Vera List Center for Art and Politics, MAP Fund, Dance/USA, 3Arts, and the Foundation for Contemporary Arts. Martine has written about blackness, queerness, and bodies in action and contributed chapters to a range of publications including Black Social Dance: Embodied Geographies of Freedom (forthcoming); In the Horizontal Plane: taisha paggett performance works (Soberscove, forthcoming); Queer Dance: Meanings and Makings (Oxford, 2017); and Platforms: Ten Years of Chances Dances (2016). Martine is the author of TREASURE| My Black Rupture (Thread Makes Blanket, 2016).", "events": []}]</script>
+<script id="admission-data" type="application/json">{"my_scores": {"toefl_new_total": "5.5 / 6.0", "toefl_old_total": "110 / 120", "reading": "5.0", "listening": "5.5", "speaking": "5.5", "writing": "5.5"}, "required_documents": [{"item": "포트폴리오 (Portfolio)", "requirement": "입학 지원서 포털을 통해 온라인으로 직접 업로드. 지원 가능한 파일 형식 및 가이드는 온라인 지원 링크 참조.", "tip": "작품의 퀄리티와 일관성 있는 주제 의식이 드러나도록 구성"}, {"item": "작가 노트 (Artist's Statement)", "requirement": "1~2 페이지 분량의 에세이. 영향받은 예술적 원천(sources of influence), 탐구의 성격, 향후 작업 방향에 대한 논의 포함.", "tip": "본인의 예술적 철학과 MFA 과정에서 연구하고 싶은 바를 구체적으로 기술"}, {"item": "추천서 (Letters of Rec.)", "requirement": "최소 3장 ~ 최대 4장 필수 제출. 온라인 지원서 또는 인문학부 담당 부서를 통해 제출 방식 확인.", "tip": "본인의 예술적 재능이나 학업 태도를 깊이 있게 보증해 줄 수 있는 지도교수나 전문가에게 요청"}, {"item": "GRE 성적", "requirement": "제출 의무 없음 (Not required).", "tip": "GRE 공부 대신 포트폴리오와 에세이 완성도를 높이는 데 집중 가능"}, {"item": "영어자격조건(Pass/Fail)", "requirement": "TOEFL 90점 이상, 뉴토플 기준 4.5 이상 (과락 없음)\nIELTS만 시험성적으로 인정. 합계 7.0 이상 & 모든 영역 7.0 이상이어야 함 (과락 있음)", "tip": "Pass/Fail이지만 최소 5.0 이상, Speaking 5.5 이상 필요"}], "contacts": [{"purpose": "MFA 프로그램 관련 & 캠퍼스 방문 예약 문의", "email": "dova@uchicago.edu"}, {"purpose": "입학 지원서 및 어학 조건 관련 행정 문의", "email": "ahd-admissions@uchicago.edu"}], "ta_eligibility": {"description": "시카고 대학교 대학원 조교(TA)는 학부생을 직접 가르치고 토론 세미나를 이끌며 오피스 아워로 소통해야 하므로, 일반 입학 기준보다 훨씬 높은 Speaking 능력을 요구합니다.", "table": [{"test": "IELTS Speaking", "pass": "8.0점 이상 (즉시 조교 가능)", "review": "7.0 ~ 7.5점 (자체 추가 시험 AEPA 필요)"}, {"test": "TOEFL Speaking", "pass": "26점 이상, 뉴토플 5.5 이상 (즉시 조교 가능)", "review": "23 ~ 25점 (자체 추가 시험 AEPA 필요)"}]}, "score_sending": {"toefl_code": "1832 (경영대학원 Booth MBA/PhD는 별도 코드 사용)", "ielts_note": "종이 성적표는 받지 않으며, 반드시 시험 센터에 요청하여 아래 e-download 계정으로 전자 전송해야 합니다.", "ielts_account_name": "University of Chicago – Graduate Enrollment", "ielts_address": "970 East 58th Street, Third Floor, Chicago, IL 60637"}}</script>
+<script>
+  const faculty = JSON.parse(document.getElementById('faculty-data').textContent);
+  const admissionInfo = JSON.parse(document.getElementById('admission-data').textContent);
+  const listEl = document.getElementById('list');
+  const detailEl = document.getElementById('detail');
+
+  const infoBtn = document.createElement('button');
+  infoBtn.textContent = '📋 DoVA 지원 요건 & 내 점수';
+  infoBtn.className = 'info-btn divider';
+  infoBtn.addEventListener('click', () => {
+    document.querySelectorAll('#list button').forEach(b => b.classList.remove('active'));
+    infoBtn.classList.add('active');
+    showInfoPage(admissionInfo);
+  });
+  listEl.appendChild(infoBtn);
+
+  faculty.forEach((person, idx) => {
+    const btn = document.createElement('button');
+    btn.textContent = person.name;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#list button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showDetail(person);
+    });
+    listEl.appendChild(btn);
+  });
+
+  function showDetail(person) {
+    detailEl.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'detail-grid';
+
+    const textCol = document.createElement('div');
+    textCol.className = 'detail-text';
+
+    const h1 = document.createElement('h1');
+    h1.textContent = person.name;
+    textCol.appendChild(h1);
+
+    if (person.title) {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      p.textContent = person.title;
+      textCol.appendChild(p);
+    }
+    if (person.office) {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      p.textContent = person.office;
+      textCol.appendChild(p);
+    }
+    if (person.teaching_since) {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      p.textContent = person.teaching_since;
+      textCol.appendChild(p);
+    }
+    if (person.email) {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      const a = document.createElement('a');
+      a.href = 'mailto:' + person.email;
+      a.textContent = person.email;
+      p.appendChild(a);
+      textCol.appendChild(p);
+    }
+    if (person.homepage) {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      const a = document.createElement('a');
+      a.href = person.homepage;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = person.homepage;
+      p.appendChild(a);
+      textCol.appendChild(p);
+    }
+    {
+      const p = document.createElement('div');
+      p.className = 'meta';
+      const a = document.createElement('a');
+      a.href = person.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'DoVA 프로필 페이지 원문';
+      p.appendChild(a);
+      textCol.appendChild(p);
+    }
+
+    const bio = document.createElement('div');
+    bio.className = 'bio';
+    bio.textContent = person.bio;
+    textCol.appendChild(bio);
+
+    if (person.events && person.events.length > 0) {
+      const eventsWrap = document.createElement('div');
+      eventsWrap.className = 'events';
+      const h2 = document.createElement('h2');
+      h2.textContent = 'Related Events';
+      eventsWrap.appendChild(h2);
+      person.events.forEach(ev => {
+        const evEl = document.createElement('div');
+        evEl.className = 'event';
+        const title = document.createElement('a');
+        title.href = ev.url;
+        title.target = '_blank';
+        title.rel = 'noopener';
+        title.textContent = ev.title;
+        evEl.appendChild(title);
+        const info = document.createElement('div');
+        info.textContent = [ev.date, ev.host, ev.location].filter(Boolean).join(' · ');
+        evEl.appendChild(info);
+        eventsWrap.appendChild(evEl);
+      });
+      textCol.appendChild(eventsWrap);
+    }
+
+    grid.appendChild(textCol);
+
+    if (person.image) {
+      const imageCol = document.createElement('div');
+      imageCol.className = 'detail-image';
+      const img = document.createElement('img');
+      img.src = person.image;
+      img.alt = person.name;
+      imageCol.appendChild(img);
+      grid.appendChild(imageCol);
+    }
+
+    detailEl.appendChild(grid);
+  }
+
+  function addSection(container, titleText) {
+    const section = document.createElement('section');
+    const h2 = document.createElement('h2');
+    h2.textContent = titleText;
+    section.appendChild(h2);
+    container.appendChild(section);
+    return section;
+  }
+
+  function showInfoPage(info) {
+    detailEl.innerHTML = '';
+
+    const page = document.createElement('div');
+    page.className = 'info-page';
+
+    const h1 = document.createElement('h1');
+    h1.textContent = 'DoVA 지원 요건 & 내 점수';
+    page.appendChild(h1);
+
+    // my scores
+    const scoreSection = addSection(page, '내 어학 점수 (TOEFL)');
+    const cards = document.createElement('div');
+    cards.className = 'score-cards';
+    const scoreEntries = [
+      ['총점 (뉴토플)', info.my_scores.toefl_new_total],
+      ['총점 (구토플 환산)', info.my_scores.toefl_old_total],
+      ['Reading', info.my_scores.reading],
+      ['Listening', info.my_scores.listening],
+      ['Speaking', info.my_scores.speaking],
+      ['Writing', info.my_scores.writing],
+    ];
+    scoreEntries.forEach(([label, value]) => {
+      const card = document.createElement('div');
+      card.className = 'score-card';
+      const l = document.createElement('div');
+      l.className = 'label';
+      l.textContent = label;
+      const v = document.createElement('div');
+      v.className = 'value';
+      v.textContent = value;
+      card.appendChild(l);
+      card.appendChild(v);
+      cards.appendChild(card);
+    });
+    scoreSection.appendChild(cards);
+
+    // required documents
+    const docsSection = addSection(page, '제출 서류 요건');
+    const docsTable = document.createElement('table');
+    docsTable.innerHTML = '<tr><th>구분</th><th>제출 요건 및 상세 내용</th><th>준비 팁</th></tr>';
+    info.required_documents.forEach(doc => {
+      const tr = document.createElement('tr');
+      const c1 = document.createElement('td');
+      c1.textContent = doc.item;
+      const c2 = document.createElement('td');
+      c2.textContent = doc.requirement;
+      const c3 = document.createElement('td');
+      c3.className = 'tip';
+      c3.textContent = doc.tip;
+      tr.appendChild(c1);
+      tr.appendChild(c2);
+      tr.appendChild(c3);
+      docsTable.appendChild(tr);
+    });
+    docsSection.appendChild(docsTable);
+
+    // TA eligibility
+    const taSection = addSection(page, '대학원 조교(TA) 영어 자격 요건');
+    const taDesc = document.createElement('p');
+    taDesc.textContent = info.ta_eligibility.description;
+    taSection.appendChild(taDesc);
+    const taTable = document.createElement('table');
+    taTable.innerHTML = '<tr><th>시험 구분</th><th>무심사 패스 기준</th><th>⚠️ 자체 추가 시험(AEPA) 필요 기준</th></tr>';
+    info.ta_eligibility.table.forEach(row => {
+      const tr = document.createElement('tr');
+      const c1 = document.createElement('td');
+      c1.textContent = row.test;
+      const c2 = document.createElement('td');
+      c2.textContent = row.pass;
+      const c3 = document.createElement('td');
+      c3.textContent = row.review;
+      tr.appendChild(c1);
+      tr.appendChild(c2);
+      tr.appendChild(c3);
+      taTable.appendChild(tr);
+    });
+    taSection.appendChild(taTable);
+    const taNote = document.createElement('p');
+    taNote.className = 'tip';
+    taNote.textContent = '내 TOEFL Speaking 점수: ' + info.my_scores.speaking + ' → 26점 이상(뉴토플 5.5) 기준을 충족하여 별도 추가 시험 없이 조교 임용이 가능합니다.';
+    taSection.appendChild(taNote);
+
+    // score sending
+    const sendSection = addSection(page, '영어 성적 송부처 (Where to Send)');
+    const sendList = document.createElement('ul');
+    const sendItems = [
+      'TOEFL 기관 코드: ' + info.score_sending.toefl_code,
+      'IELTS: ' + info.score_sending.ielts_note,
+      'Account Name: ' + info.score_sending.ielts_account_name,
+      'Address: ' + info.score_sending.ielts_address,
+    ];
+    sendItems.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      sendList.appendChild(li);
+    });
+    sendSection.appendChild(sendList);
+
+    // contacts
+    const contactSection = addSection(page, '문의처 및 연락처 안내');
+    const contactList = document.createElement('ul');
+    info.contacts.forEach(c => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = 'mailto:' + c.email;
+      a.textContent = c.email;
+      li.textContent = c.purpose + ': ';
+      li.appendChild(a);
+      contactList.appendChild(li);
+    });
+    contactSection.appendChild(contactList);
+
+    page.appendChild(contactSection);
+    detailEl.appendChild(page);
+  }
+
+  if (faculty.length > 0) {
+    listEl.querySelector('button:not(.info-btn)').click();
+  }
+</script>
+</body>
+</html>
