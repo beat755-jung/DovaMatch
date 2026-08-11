@@ -1,2 +1,19 @@
 beautifulsoup4>=4.12.3
 requests>=2.32.3
+streamlit>=1.61
+
+# Optional: src/analyzer.py uses spaCy noun-chunk parsing when available and
+# falls back to a vocabulary/regex matcher otherwise. To enable it:
+#   pip install spacy && python -m spacy download en_core_web_sm
+# spacy>=3.7
+
+# Optional: src/matcher.py uses sentence-transformers (local, multilingual) when
+# available and falls back to a dependency-free TF-IDF matcher otherwise.
+#   pip install sentence-transformers
+# sentence-transformers>=3.0
+
+# Optional: only needed for `python -m src.matcher --backend openai`, which
+# sends your essay text to OpenAI's embedding API — install and set
+# OPENAI_API_KEY only if you want that.
+#   pip install openai
+# openai>=1.0
