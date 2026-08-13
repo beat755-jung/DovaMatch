@@ -397,6 +397,59 @@ def render_portfolio_strategy_guide(ps):
         st.info(ps["summary"])
 
 
+EXAMPLE_ESSAY_PARAGRAPHS = [
+    {
+        "stage": "도입 — 질문의 기원",
+        "text": (
+            "매주 일요일, 어머니는 같은 순서로 부엌을 닦았다. 나는 그 손이 지나간 자리마다 뽀얗게 다시 내려앉는 먼지를 "
+            "지켜보며 자랐다 — 아무리 반복해도 완결되지 않는, 그러나 누구도 그 반복을 '일'이라 부르지 않는 노동. "
+            "1번 회화 〈먼지, 그녀의 손이 닿은 자리〉는 그 먼지를 실제로 캔버스에 수집해 얹는 것에서 시작했다. "
+            "돌봄노동을 은유가 아니라 물질 그 자체로 다루고 싶었다."
+        ),
+    },
+    {
+        "stage": "전개 — 매체적 실험의 논리",
+        "text": (
+            "회화가 먼지의 '축적'을 보여줄 수는 있어도 그 축적이 만들어지는 '시간'은 담지 못했다. 그래서 2번 작업 "
+            "〈부엌의 시간, 12시간 루프〉로 넘어가 같은 손동작의 반복을 시간 기반 매체에 옮겼고, 다시 그 먼지를 "
+            "인화지 유제 위에 직접 얹어 노출한 3번 〈먼지 초상 #3〉로 사진의 화학적 과정 자체에 결합시켰다. "
+            "매체를 바꾼 것은 새로움을 위해서가 아니라, 같은 물질(수집된 가정용 먼지)이 회화·영상·사진 각각에서 "
+            "요구하는 질문이 달랐기 때문이다."
+        ),
+    },
+    {
+        "stage": "심화 — 이론적 좌표",
+        "text": (
+            "이 반복은 페미니즘 노동사에서 말하는 '비가시적 재생산 노동'과 정확히 겹쳤다. 다만 나는 그 개념을 "
+            "인용하는 데서 멈추지 않고, 먼지라는 물질이 그 비가시성을 어떻게 감각적으로 배반하는지 — 지워도 "
+            "다시 쌓이고, 지운 흔적마저 흔적으로 남는지 — 를 매체별 표면(캔버스의 물성, 필름의 화학, 렌즈의 시간)에서 "
+            "각기 다른 방식으로 실험하고 싶었다. 이 집요함은 20점 전체에서 클로즈업 디테일 샷으로 반복된다."
+        ),
+    },
+    {
+        "stage": "마무리 — 다음 단계",
+        "text": (
+            "시카고에서의 2년 동안, 이 질문을 조각과 설치로 확장하고 싶다. 20번에 배치한 미완성 스케치는 수집한 "
+            "먼지를 압축해 실제 오브제로 만드는 작업의 첫 시도다 — 아직 결론이 아니라, 다음 매체가 던질 질문을 "
+            "기다리는 자리로 남겨두었다."
+        ),
+    },
+]
+
+
+def render_essay_example():
+    st.markdown("**작성 예시 (포트폴리오 예시와 동일한 핵심 개념 사용)**")
+    st.caption(
+        "위 포트폴리오 작성 예시(1~3번)와 같은 '가정 내 먼지로 돌봄노동의 비가시성을 탐구한다'는 개념으로 쓴 "
+        "가상의 에세이입니다. 포트폴리오 작품을 구체적으로 언급하고, 재료 란에 쓴 어휘('수집된 가정용 먼지')를 "
+        "그대로 반복해 두 텍스트가 같은 세계에서 나왔음을 보여주는 방식에 주목하세요."
+    )
+    for para in EXAMPLE_ESSAY_PARAGRAPHS:
+        with st.container(border=True):
+            st.markdown(f"**{para['stage']}**")
+            st.write(para["text"])
+
+
 def render_essay_strategy_guide(es):
     st.write(es["intro"])
 
@@ -406,6 +459,8 @@ def render_essay_strategy_guide(es):
             with st.container(border=True):
                 st.markdown(f"**{stage['stage']}**")
                 st.write(stage["description"])
+
+    render_essay_example()
 
     if es.get("writing_tips"):
         st.markdown("**작성 팁**")
@@ -551,6 +606,36 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
         with st.expander("📖 작성 가이드 보기 — SOP/아티스트 스테이트먼트 작성 전략"):
             render_essay_strategy_guide(essay_strategy)
 
+    st.markdown("#### 🔗 포트폴리오 ↔ 에세이 상호보완성 분석")
+    st.caption(
+        "글에서 주장한 탐구가 시각물로 증명되는지, 시각물이 미처 설명하지 못한 맥락을 글이 채워주는지를 봅니다. "
+        "포트폴리오를 평가하고 아래 에세이를 분석하면 결과가 이 아래에 표시됩니다."
+    )
+    with st.expander("ℹ️ 포트폴리오 분석방법 - 포트폴리오와 에세이 매칭방법"):
+        st.markdown(
+            "**이미지가 아니라 텍스트를 분석합니다.** 이 도구는 업로드된 이미지 파일을 시각적으로 "
+            "판독하지 않습니다. 대신 각 포트폴리오 슬롯에 입력한 **제목 + 재료 + 설명**을 "
+            "`\"제목. 재료. 설명\"` 형태의 한 문장으로 합친 뒤, 에세이를 문단 단위로 나눈 것과 함께 "
+            "임베딩(문장을 의미 벡터로 변환)해서 코사인 유사도로 비교합니다. "
+            "교수진 매칭에 쓰는 것과 동일한 임베딩 백엔드(TF-IDF / Sentence-Transformers / OpenAI)를 재사용합니다."
+        )
+        st.markdown(
+            "**양방향으로 커버리지를 계산합니다.**\n"
+            "- 포트폴리오 → 에세이: 각 작품의 텍스트와 가장 유사한 에세이 문단을 찾고, 평균보다 유사도가 "
+            "많이 낮은 작품은 '글로 뒷받침되지 않은 시각적 주장(visual gap)'으로 표시합니다.\n"
+            "- 에세이 → 포트폴리오: 각 문단과 가장 유사한 작품을 찾고, 평균보다 유사도가 많이 낮은 문단은 "
+            "'이미지로 증명되지 않은 주장(text gap)'으로 표시합니다."
+        )
+        st.warning(
+            "**따라서 제목·재료·설명을 얼마나 꼼꼼하고 구체적으로 채웠는지가 분석 품질을 좌우합니다.** "
+            "제목이 '무제'이거나 재료 란에 재료명만 짧게 적혀 있거나 설명이 비어 있으면, 실제 이미지가 "
+            "에세이와 개념적으로 잘 맞물려도 유사도 계산에 반영될 텍스트 자체가 없어서 '공백(gap)'으로 "
+            "잘못 표시될 수 있습니다. 반대로 설명을 에세이 문장과 비슷한 개념어로 채우면 실제 작품 내용과 "
+            "무관하게 유사도가 높게 나올 수도 있습니다 — 즉 이 점수는 '이미지와 글의 실제 일치'가 아니라 "
+            "'입력한 텍스트 사이의 의미적 유사성'을 재는 것이므로, 참고용 보조 지표로 활용하고 최종 판단은 "
+            "직접 이미지와 에세이를 함께 보며 내려야 합니다."
+        )
+
     essay_text = st.text_area(
         "SOP 에세이 텍스트",
         height=280,
@@ -584,10 +669,7 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
 
         complementarity = report.get("portfolio_complementarity")
         if complementarity:
-            st.markdown("### 🔗 포트폴리오 ↔ 에세이 상호보완성 분석")
-            st.caption(
-                "글에서 주장한 탐구가 시각물로 증명되는지, 시각물이 미처 설명하지 못한 맥락을 글이 채워주는지를 봅니다."
-            )
+            st.markdown("#### 결과")
             st.markdown(
                 '<div class="dm-coverage-wrap">'
                 f'<div class="dm-coverage-box"><div class="dm-coverage-num">{complementarity["portfolio_coverage_pct"]}%</div>'
