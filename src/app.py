@@ -19,6 +19,7 @@ from urllib.parse import quote, unquote
 
 import pandas as pd
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -559,7 +560,12 @@ def render_image_feedback_section(faculty_data):
         "(포트폴리오 평가/에세이 매칭은 텍스트만 비교하지만, 이 항목만은 이미지를 실제로 읽습니다.)"
     )
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY") or st.secrets.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        try:
+            api_key = st.secrets.get("ANTHROPIC_API_KEY")
+        except StreamlitSecretNotFoundError:
+            api_key = None
     has_key = bool(api_key)
     if not has_key:
         st.warning(
