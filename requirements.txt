@@ -17,3 +17,9 @@ streamlit>=1.61
 # OPENAI_API_KEY only if you want that.
 #   pip install openai
 # openai>=1.0
+
+# Optional: src/image_feedback.py sends an uploaded portfolio image to Claude's
+# vision API for a simulated faculty-critique feature. Install and set
+# ANTHROPIC_API_KEY only if you want that (requires explicit consent in the UI).
+#   pip install anthropic
+# anthropic>=0.40

@@ -12,8 +12,7 @@ Run with:
 """
 
 import json
-import math
-import re
+import os
 import sys
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -24,6 +23,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.analyzer import DATA_DIR, load_faculty_data  # noqa: E402
+from src.image_feedback import analyze_portfolio_image  # noqa: E402
 from src.matcher import analyze_essay, get_backend, load_alumni_data  # noqa: E402
 from src.portfolio import (  # noqa: E402
     PORTFOLIO_SIZE,
@@ -67,25 +67,6 @@ CSS = """
   .dm-coverage-wrap { display: flex; gap: 16px; margin: 8px 0 16px 0; }
   .dm-coverage-box { flex: 1; border: 1px solid rgba(128,128,128,0.25); border-radius: 10px; padding: 10px 14px; }
   .dm-coverage-num { font-size: 24px; font-weight: 700; }
-  .dm-toefl-wrap { max-width: 420px; margin: 0 auto; text-align: center; }
-  .dm-toefl-label { font-size: 14px; opacity: 0.6; margin-bottom: 4px; }
-  .dm-toefl-gauge { position: relative; display: inline-block; line-height: 0; }
-  .dm-toefl-total {
-    position: absolute; left: 50%; top: 62%; transform: translate(-50%, -50%);
-    font-size: 22px; font-weight: 700; white-space: nowrap;
-  }
-  .dm-toefl-sub { font-size: 14px; opacity: 0.6; margin-top: 4px; margin-bottom: 20px; }
-  .dm-toefl-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; text-align: center;
-  }
-  @media (max-width: 420px) {
-    .dm-toefl-grid { grid-template-columns: 1fr; }
-  }
-  .dm-toefl-card-label { font-size: 14px; opacity: 0.75; margin-bottom: 8px; }
-  .dm-toefl-card-value {
-    background: rgba(59, 83, 216, 0.10); border-radius: 12px; padding: 18px 8px;
-    font-size: 20px; font-weight: 700; color: #3b53d8;
-  }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -570,6 +551,61 @@ def render_portfolio_section(backend_name, disabled, portfolio_strategy=None):
                 st.success("20점 전체가 핵심 개념과 고르게 연결되어 있습니다.")
 
 
+def render_image_feedback_section(faculty_data):
+    st.markdown("### 🖼️ 이미지 교수 피드백")
+    st.caption(
+        "작품 이미지를 업로드하면 Claude(Anthropic)가 이미지를 직접 분석해, DoVA 교수 9인이 "
+        "각자의 예술 철학/관심사에 비추어 이 이미지를 볼 때 할 법한 평가와 질문을 상상해서 보여줍니다. "
+        "(포트폴리오 평가/에세이 매칭은 텍스트만 비교하지만, 이 항목만은 이미지를 실제로 읽습니다.)"
+    )
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or st.secrets.get("ANTHROPIC_API_KEY")
+    has_key = bool(api_key)
+    if not has_key:
+        st.warning(
+            "이 기능을 사용하려면 `ANTHROPIC_API_KEY` 환경 변수가 설정되어 있어야 합니다."
+        )
+
+    uploaded = st.file_uploader(
+        "작품 이미지 업로드 (JPG/PNG/WEBP)", type=["jpg", "jpeg", "png", "webp"], key="img_feedback_upload"
+    )
+    consent = st.checkbox(
+        "업로드한 이미지를 Anthropic Claude API로 전송해 분석하는 데 동의합니다.",
+        key="img_feedback_consent",
+    )
+
+    if uploaded is not None:
+        st.image(uploaded, width=280)
+
+    if st.button(
+        "🔍 이미지 분석하기", disabled=not (has_key and consent and uploaded is not None), width="stretch"
+    ):
+        media_type = uploaded.type or "image/jpeg"
+        image_bytes = uploaded.getvalue()
+        with st.spinner("Claude가 이미지를 분석하고 9인의 교수 반응을 생성하는 중..."):
+            try:
+                report = analyze_portfolio_image(image_bytes, media_type, faculty_data, api_key=api_key)
+            except Exception as e:
+                st.error(f"분석 실패: {e}")
+                report = None
+        st.session_state["image_feedback_report"] = report
+
+    report = st.session_state.get("image_feedback_report")
+    if report:
+        st.markdown("#### 이미지에 대한 중립적 관찰")
+        st.write(report["overall_impression"])
+
+        st.markdown("#### 교수별 예상 반응 & 질문")
+        for fb in report["faculty_feedback"]:
+            with st.container(border=True):
+                st.markdown(f"**{fb['name']}**")
+                st.write(fb["reaction"])
+                if fb.get("questions"):
+                    st.caption("예상 질문")
+                    for q in fb["questions"]:
+                        st.markdown(f"- {q}")
+
+
 def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
     st.markdown("## ✍️ 포트폴리오 & 에세이 매칭")
     st.caption(
@@ -597,6 +633,9 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
 
     portfolio_strategy = (admission_info or {}).get("portfolio_strategy")
     render_portfolio_section(backend_name, disabled, portfolio_strategy)
+
+    st.divider()
+    render_image_feedback_section(faculty_data)
 
     st.divider()
     st.markdown("### ✍️ 에세이 매칭")
@@ -729,68 +768,8 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
 # Admission info
 # ---------------------------------------------------------------------------
 
-def _parse_fraction(text, default_max=6.0):
-    m = re.match(r"\s*([\d.]+)\s*/\s*([\d.]+)", text or "")
-    if not m:
-        return None, default_max
-    return float(m.group(1)), float(m.group(2))
-
-
-def render_toefl_score_report(scores):
-    total_val, total_max = _parse_fraction(scores["toefl_new_total"])
-    old_val, old_max = _parse_fraction(scores["toefl_old_total"], default_max=120.0)
-    pct = max(0.0, min(1.0, total_val / total_max)) if total_val is not None else 0.0
-
-    radius = 80
-    half_circ = math.pi * radius
-    filled = pct * half_circ
-
-    gauge_svg = (
-        '<svg viewBox="0 0 200 112" width="220" height="124">'
-        '<path d="M20 100 A 80 80 0 0 1 180 100" fill="none" '
-        'stroke="rgba(128,128,128,0.18)" stroke-width="18" stroke-linecap="round"/>'
-        '<path d="M20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#3b53d8" '
-        f'stroke-width="18" stroke-linecap="round" stroke-dasharray="{filled:.1f} {half_circ:.1f}"/>'
-        "</svg>"
-    )
-
-    total_label = f"{total_val:g} of {total_max:g}" if total_val is not None else scores["toefl_new_total"]
-    old_label = f"{old_val:g} of {old_max:g}" if old_val is not None else scores["toefl_old_total"]
-
-    sub_scores = [
-        ("📖 Reading", scores["reading"]),
-        ("🎧 Listening", scores["listening"]),
-        ("✏️ Writing", scores["writing"]),
-        ("🎤 Speaking", scores["speaking"]),
-    ]
-    cards = "".join(
-        f'<div><div class="dm-toefl-card-label">{label}</div>'
-        f'<div class="dm-toefl-card-value">{value} of {total_max:g}</div></div>'
-        for label, value in sub_scores
-    )
-
-    st.markdown(
-        f"""
-        <div class="dm-toefl-wrap">
-          <div class="dm-toefl-label">Overall Score</div>
-          <div class="dm-toefl-gauge">
-            {gauge_svg}
-            <div class="dm-toefl-total">{total_label}</div>
-          </div>
-          <div class="dm-toefl-sub">{old_label}</div>
-          <div class="dm-toefl-grid">{cards}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def render_admission_info(info):
-    st.markdown("## 📋 DoVA 지원 요건 & 내 점수")
-
-    st.markdown("### 내 어학 점수 (TOEFL)")
-    scores = info["my_scores"]
-    render_toefl_score_report(scores)
+    st.markdown("## 📋 DoVA 지원 요건")
 
     st.markdown("### 제출 서류 요건")
     for doc in info["required_documents"]:
@@ -808,11 +787,6 @@ def render_admission_info(info):
             for row in ta["table"]
         ]
     )
-    st.caption(
-        f"내 TOEFL Speaking 점수: {scores['speaking']} → 26점 이상(뉴토플 5.5) 기준을 충족하여 "
-        "별도 추가 시험 없이 조교 임용이 가능합니다."
-    )
-
     st.markdown("### 영어 성적 송부처 (Where to Send)")
     ss = info["score_sending"]
     st.markdown(f"- TOEFL 기관 코드: {ss['toefl_code']}")
@@ -823,6 +797,97 @@ def render_admission_info(info):
     st.markdown("### 문의처 및 연락처 안내")
     for c in info["contacts"]:
         st.markdown(f"- {c['purpose']}: [{c['email']}](mailto:{c['email']})")
+
+
+# ---------------------------------------------------------------------------
+# Graduate opportunities (dova.uchicago.edu/graduate/opportunities)
+# ---------------------------------------------------------------------------
+
+OPPORTUNITIES = [
+    {
+        "title": "Teaching Fellowship (교육 펠로우십)",
+        "description": "최근 DoVA 졸업생을 위한 1년 프로그램으로, 교육 역량 강화와 예술 실무 발전을 목표로 합니다.",
+        "details": [
+            "Arts 코어 과목 4개를 담당하는 전임 강사(Full-time Lecturer) 직책",
+            "개인 예술 활동을 지속하고 캠퍼스 활동에 참여할 것을 기대",
+            "분기말 MFA 크리틱 및 봄학기 학부 크리틱 참석",
+            "Chicago Center for Teaching 및 DoVA 디렉터를 통한 교육/전문성 개발 참여",
+        ],
+        "link": None,
+    },
+    {
+        "title": "Ground Floor: A Biennial Exhibition of New Art from Chicago",
+        "description": "시카고 5개 MFA 프로그램(Columbia College Chicago, Northwestern University, School of the Art Institute of Chicago, University of Chicago, University of Illinois at Chicago)에서 20명의 작가를 선발하는 격년제 전시로, 2010년 시작되었습니다.",
+        "details": [
+            "학과 추천 및 심사위원회 검토를 통해 선정",
+            "전시 및 도록(publication) 발간 포함",
+            "Hyde Park Art Center에서 개최",
+        ],
+        "link": ("Ground Floor at Hyde Park Art Center", "https://www.hydeparkart.org/get-involved/artist-opportunities/ground-floor/"),
+    },
+    {
+        "title": "Arts Club of Chicago Fellowship",
+        "description": "시카고 지역 신진 작가를 위한 격년제 펠로우십으로, 학과 추천이 필요한 경쟁 프로그램입니다.",
+        "details": [
+            "선정된 펠로우는 Arts Club의 프로그램 및 전시에 참여",
+            "최근 추천자: Brit Barton (2016), Takashi Shallow (MFA 2018), Daisy Schultz (2020), Quichen Wu (2023)",
+        ],
+        "link": ("Arts Club of Chicago", "https://www.artsclubchicago.org/"),
+    },
+    {
+        "title": "EXPO CHICAGO",
+        "description": "국제 현대·근대 미술 아트페어로, DoVA가 최근 MFA 졸업생의 부스 참가 비용을 지원합니다.",
+        "details": [
+            "Reva and David Logan Center for the Arts와 협력",
+            "매년 Navy Pier의 Festival Hall에서 4일간 개최",
+            "작가, 컬렉터, 갤러리스트 및 국제적인 관객에게 노출될 기회 제공",
+        ],
+        "link": ("EXPO CHICAGO", "https://www.expochicago.com/"),
+    },
+    {
+        "title": "Outside Visitors Program",
+        "description": "동문을 초청 비평가 및 강연자로 초대하여 커뮤니티와의 연결을 유지하는 프로그램입니다.",
+        "details": [
+            "Tuesday Night Critiques, Quarter-End Critiques, Senior Seminars",
+            "MFA 학생 스튜디오 방문, 동문 강연 및 패널",
+            "과거 참여자: Devin T. Mays (MFA 2016), Dado (MFA 2014), Matthew Metzger (MFA 2009), John Preus (MFA 2006), Karen Reimer (MFA 1989)",
+        ],
+        "link": None,
+    },
+    {
+        "title": "Office of Career Advancement",
+        "description": "경험 학습(experiential learning) 기회를 제공하고, 재학생 및 동문을 고용주와 연결합니다.",
+        "details": [],
+        "link": ("Career Advancement", "https://careeradvancement.uchicago.edu/"),
+    },
+]
+
+
+def render_opportunities():
+    st.markdown("## 🎓 DoVA 졸업 후 진로 & 기회")
+    st.caption(
+        "출처: [dova.uchicago.edu/graduate/opportunities]"
+        "(https://dova.uchicago.edu/graduate/opportunities)"
+    )
+
+    for opp in OPPORTUNITIES:
+        with st.container(border=True):
+            st.markdown(f"**{opp['title']}**")
+            st.write(opp["description"])
+            for d in opp["details"]:
+                st.markdown(f"- {d}")
+            if opp["link"]:
+                label, url = opp["link"]
+                st.markdown(f"🔗 [{label}]({url})")
+
+    st.markdown("### 문의처")
+    st.markdown(
+        "**Department of Visual Arts**  \n"
+        "Reva and David Logan Center for the Arts  \n"
+        "915 East 60th Street, Suite 236, Chicago, IL 60637  \n"
+        "Email: [dova@uchicago.edu](mailto:dova@uchicago.edu)  \n"
+        "Phone: (773) 753-4821"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -846,13 +911,13 @@ def main():
         if st.button("👩‍🏫 교수진 갤러리", width="stretch", type="primary" if tab == "faculty" and not person_name else "secondary"):
             go_to(tab="faculty")
     with nav2:
-        if st.button("🇰🇷 한국인 동문", width="stretch", type="primary" if tab == "alumni" and not person_name else "secondary"):
-            go_to(tab="alumni")
+        if st.button("🎓 진로 & 기회", width="stretch", type="primary" if tab == "opportunities" and not person_name else "secondary"):
+            go_to(tab="opportunities")
     with nav3:
         if st.button("🖼️✍️ 포트폴리오/에세이 매칭", width="stretch", type="primary" if tab == "match" else "secondary"):
             go_to(tab="match")
     with nav4:
-        if st.button("📋 지원 요건 & 내 점수", width="stretch", type="primary" if tab == "info" else "secondary"):
+        if st.button("📋 지원 요건", width="stretch", type="primary" if tab == "info" else "secondary"):
             go_to(tab="info")
 
     st.divider()
@@ -866,9 +931,8 @@ def main():
             render_detail(person, kind)
         return
 
-    if tab == "alumni":
-        st.markdown("## 🇰🇷 한국인 DoVA / DoVA-연계 동문")
-        render_gallery(alumni_data, alumni=True)
+    if tab == "opportunities":
+        render_opportunities()
     elif tab == "match":
         render_match_dashboard(faculty_data, alumni_data, admission_info)
     elif tab == "info":

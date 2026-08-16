@@ -61,10 +61,6 @@ PAGE_TEMPLATE = """<!doctype html>
   .info-page th, .info-page td {{ text-align: left; padding: 10px 12px; border: 1px solid #e0e0e0; vertical-align: top; white-space: pre-line; }}
   .info-page th {{ background: #f4f4f8; }}
   .info-page .tip {{ color: #666; font-size: 13px; }}
-  .score-cards {{ display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }}
-  .score-card {{ background: #f4f4f8; border-radius: 8px; padding: 12px 18px; min-width: 100px; }}
-  .score-card .label {{ font-size: 12px; color: #666; }}
-  .score-card .value {{ font-size: 20px; font-weight: 700; }}
   .stage-list {{ margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }}
   .stage-card {{ background: #f4f4f8; border-left: 4px solid #3b53d8; border-radius: 6px; padding: 12px 16px; }}
   .stage-card .range {{ font-weight: 700; margin-bottom: 4px; }}
@@ -91,13 +87,12 @@ PAGE_TEMPLATE = """<!doctype html>
 <script id="admission-data" type="application/json">{admission_json}</script>
 <script>
   const faculty = JSON.parse(document.getElementById('faculty-data').textContent);
-  const alumni = JSON.parse(document.getElementById('alumni-data').textContent);
   const admissionInfo = JSON.parse(document.getElementById('admission-data').textContent);
   const listEl = document.getElementById('list');
   const detailEl = document.getElementById('detail');
 
   const infoBtn = document.createElement('button');
-  infoBtn.textContent = '📋 DoVA 지원 요건 & 내 점수';
+  infoBtn.textContent = '📋 DoVA 지원 요건';
   infoBtn.className = 'info-btn divider';
   infoBtn.addEventListener('click', () => {{
     document.querySelectorAll('#list button').forEach(b => b.classList.remove('active'));
@@ -105,6 +100,16 @@ PAGE_TEMPLATE = """<!doctype html>
     showInfoPage(admissionInfo);
   }});
   listEl.appendChild(infoBtn);
+
+  const oppBtn = document.createElement('button');
+  oppBtn.textContent = '🎓 진로 & 기회';
+  oppBtn.className = 'info-btn divider';
+  oppBtn.addEventListener('click', () => {{
+    document.querySelectorAll('#list button').forEach(b => b.classList.remove('active'));
+    oppBtn.classList.add('active');
+    showOpportunitiesPage();
+  }});
+  listEl.appendChild(oppBtn);
 
   const facultyLabel = document.createElement('div');
   facultyLabel.className = 'section-label';
@@ -121,24 +126,6 @@ PAGE_TEMPLATE = """<!doctype html>
     }});
     listEl.appendChild(btn);
   }});
-
-  if (alumni.length > 0) {{
-    const alumniLabel = document.createElement('div');
-    alumniLabel.className = 'section-label';
-    alumniLabel.textContent = '한국인 DoVA 동문 (Alumni)';
-    listEl.appendChild(alumniLabel);
-
-    alumni.forEach((person) => {{
-      const btn = document.createElement('button');
-      btn.textContent = person.name;
-      btn.addEventListener('click', () => {{
-        document.querySelectorAll('#list button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        showDetail(person);
-      }});
-      listEl.appendChild(btn);
-    }});
-  }}
 
   function showDetail(person) {{
     detailEl.innerHTML = '';
@@ -352,35 +339,8 @@ PAGE_TEMPLATE = """<!doctype html>
     page.className = 'info-page';
 
     const h1 = document.createElement('h1');
-    h1.textContent = 'DoVA 지원 요건 & 내 점수';
+    h1.textContent = 'DoVA 지원 요건';
     page.appendChild(h1);
-
-    // my scores
-    const scoreSection = addSection(page, '내 어학 점수 (TOEFL)');
-    const cards = document.createElement('div');
-    cards.className = 'score-cards';
-    const scoreEntries = [
-      ['총점 (뉴토플)', info.my_scores.toefl_new_total],
-      ['총점 (구토플 환산)', info.my_scores.toefl_old_total],
-      ['Reading', info.my_scores.reading],
-      ['Listening', info.my_scores.listening],
-      ['Speaking', info.my_scores.speaking],
-      ['Writing', info.my_scores.writing],
-    ];
-    scoreEntries.forEach(([label, value]) => {{
-      const card = document.createElement('div');
-      card.className = 'score-card';
-      const l = document.createElement('div');
-      l.className = 'label';
-      l.textContent = label;
-      const v = document.createElement('div');
-      v.className = 'value';
-      v.textContent = value;
-      card.appendChild(l);
-      card.appendChild(v);
-      cards.appendChild(card);
-    }});
-    scoreSection.appendChild(cards);
 
     // required documents
     const docsSection = addSection(page, '제출 서류 요건');
@@ -563,10 +523,6 @@ PAGE_TEMPLATE = """<!doctype html>
       taTable.appendChild(tr);
     }});
     taSection.appendChild(taTable);
-    const taNote = document.createElement('p');
-    taNote.className = 'tip';
-    taNote.textContent = '내 TOEFL Speaking 점수: ' + info.my_scores.speaking + ' → 26점 이상(뉴토플 5.5) 기준을 충족하여 별도 추가 시험 없이 조교 임용이 가능합니다.';
-    taSection.appendChild(taNote);
 
     // score sending
     const sendSection = addSection(page, '영어 성적 송부처 (Where to Send)');
@@ -599,6 +555,117 @@ PAGE_TEMPLATE = """<!doctype html>
     contactSection.appendChild(contactList);
 
     page.appendChild(contactSection);
+    detailEl.appendChild(page);
+  }}
+
+  const OPPORTUNITIES = [
+    {{
+      title: 'Teaching Fellowship (교육 펠로우십)',
+      description: '최근 DoVA 졸업생을 위한 1년 프로그램으로, 교육 역량 강화와 예술 실무 발전을 목표로 합니다.',
+      details: [
+        'Arts 코어 과목 4개를 담당하는 전임 강사(Full-time Lecturer) 직책',
+        '개인 예술 활동을 지속하고 캠퍼스 활동에 참여할 것을 기대',
+        '분기말 MFA 크리틱 및 봄학기 학부 크리틱 참석',
+        'Chicago Center for Teaching 및 DoVA 디렉터를 통한 교육/전문성 개발 참여',
+      ],
+      link: null,
+    }},
+    {{
+      title: 'Ground Floor: A Biennial Exhibition of New Art from Chicago',
+      description: '시카고 5개 MFA 프로그램(Columbia College Chicago, Northwestern University, School of the Art Institute of Chicago, University of Chicago, University of Illinois at Chicago)에서 20명의 작가를 선발하는 격년제 전시로, 2010년 시작되었습니다.',
+      details: [
+        '학과 추천 및 심사위원회 검토를 통해 선정',
+        '전시 및 도록(publication) 발간 포함',
+        'Hyde Park Art Center에서 개최',
+      ],
+      link: {{ label: 'Ground Floor at Hyde Park Art Center', url: 'https://www.hydeparkart.org/get-involved/artist-opportunities/ground-floor/' }},
+    }},
+    {{
+      title: 'Arts Club of Chicago Fellowship',
+      description: '시카고 지역 신진 작가를 위한 격년제 펠로우십으로, 학과 추천이 필요한 경쟁 프로그램입니다.',
+      details: [
+        '선정된 펠로우는 Arts Club의 프로그램 및 전시에 참여',
+        '최근 추천자: Brit Barton (2016), Takashi Shallow (MFA 2018), Daisy Schultz (2020), Quichen Wu (2023)',
+      ],
+      link: {{ label: 'Arts Club of Chicago', url: 'https://www.artsclubchicago.org/' }},
+    }},
+    {{
+      title: 'EXPO CHICAGO',
+      description: '국제 현대·근대 미술 아트페어로, DoVA가 최근 MFA 졸업생의 부스 참가 비용을 지원합니다.',
+      details: [
+        'Reva and David Logan Center for the Arts와 협력',
+        '매년 Navy Pier의 Festival Hall에서 4일간 개최',
+        '작가, 컬렉터, 갤러리스트 및 국제적인 관객에게 노출될 기회 제공',
+      ],
+      link: {{ label: 'EXPO CHICAGO', url: 'https://www.expochicago.com/' }},
+    }},
+    {{
+      title: 'Outside Visitors Program',
+      description: '동문을 초청 비평가 및 강연자로 초대하여 커뮤니티와의 연결을 유지하는 프로그램입니다.',
+      details: [
+        'Tuesday Night Critiques, Quarter-End Critiques, Senior Seminars',
+        'MFA 학생 스튜디오 방문, 동문 강연 및 패널',
+        '과거 참여자: Devin T. Mays (MFA 2016), Dado (MFA 2014), Matthew Metzger (MFA 2009), John Preus (MFA 2006), Karen Reimer (MFA 1989)',
+      ],
+      link: null,
+    }},
+    {{
+      title: 'Office of Career Advancement',
+      description: '경험 학습(experiential learning) 기회를 제공하고, 재학생 및 동문을 고용주와 연결합니다.',
+      details: [],
+      link: {{ label: 'Career Advancement', url: 'https://careeradvancement.uchicago.edu/' }},
+    }},
+  ];
+
+  function showOpportunitiesPage() {{
+    detailEl.innerHTML = '';
+
+    const page = document.createElement('div');
+    page.className = 'info-page';
+
+    const h1 = document.createElement('h1');
+    h1.textContent = 'DoVA 졸업 후 진로 & 기회';
+    page.appendChild(h1);
+
+    const source = document.createElement('p');
+    source.className = 'tip';
+    const sourceLink = document.createElement('a');
+    sourceLink.href = 'https://dova.uchicago.edu/graduate/opportunities';
+    sourceLink.textContent = 'dova.uchicago.edu/graduate/opportunities';
+    source.textContent = '출처: ';
+    source.appendChild(sourceLink);
+    page.appendChild(source);
+
+    OPPORTUNITIES.forEach(opp => {{
+      const section = addSection(page, opp.title);
+      const desc = document.createElement('p');
+      desc.textContent = opp.description;
+      section.appendChild(desc);
+      if (opp.details.length > 0) {{
+        const ul = document.createElement('ul');
+        ul.className = 'exhibition-list';
+        opp.details.forEach(d => {{
+          const li = document.createElement('li');
+          li.textContent = d;
+          ul.appendChild(li);
+        }});
+        section.appendChild(ul);
+      }}
+      if (opp.link) {{
+        const p = document.createElement('p');
+        const a = document.createElement('a');
+        a.href = opp.link.url;
+        a.textContent = '🔗 ' + opp.link.label;
+        p.appendChild(a);
+        section.appendChild(p);
+      }}
+    }});
+
+    const contactSection = addSection(page, '문의처');
+    const contact = document.createElement('p');
+    contact.innerHTML = 'Department of Visual Arts<br>Reva and David Logan Center for the Arts<br>915 East 60th Street, Suite 236, Chicago, IL 60637<br>Email: <a href="mailto:dova@uchicago.edu">dova@uchicago.edu</a><br>Phone: (773) 753-4821';
+    contactSection.appendChild(contact);
+
     detailEl.appendChild(page);
   }}
 
