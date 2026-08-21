@@ -14,6 +14,7 @@ Run with:
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote, unquote
 
@@ -68,6 +69,14 @@ CSS = """
   .dm-coverage-wrap { display: flex; gap: 16px; margin: 8px 0 16px 0; }
   .dm-coverage-box { flex: 1; border: 1px solid rgba(128,128,128,0.25); border-radius: 10px; padding: 10px 14px; }
   .dm-coverage-num { font-size: 24px; font-weight: 700; }
+  .dm-doc-card {
+    border: 1px solid rgba(128,128,128,0.25); border-radius: 12px; padding: 16px; margin-bottom: 12px;
+  }
+  .dm-doc-title { font-weight: 700; margin-bottom: 6px; }
+  .dm-doc-req { white-space: pre-line; }
+  .dm-doc-tip { font-size: 12px; opacity: 0.75; margin-top: 6px; }
+  .dm-doc-gray { background: #ececec; color: #1a1a1a; }
+  .dm-doc-blue { background: #dceefb; color: #1a1a1a; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -458,6 +467,161 @@ def render_essay_strategy_guide(es):
         st.info(es["summary"])
 
 
+# ---------------------------------------------------------------------------
+# Saved versions (save / load / compare / delete, session-only + manual backup)
+# ---------------------------------------------------------------------------
+
+def _init_saved_versions():
+    if "saved_versions" not in st.session_state:
+        st.session_state["saved_versions"] = {}
+
+
+def _capture_snapshot():
+    portfolio_df = st.session_state.get("portfolio_df")
+    items = _portfolio_df_to_items(portfolio_df) if portfolio_df is not None else []
+    return {
+        "core_concept": st.session_state.get("portfolio_core_concept", ""),
+        "portfolio_items": items,
+        "essay_text": st.session_state.get("portfolio_essay_text_input", ""),
+        "portfolio_report": st.session_state.get("portfolio_report"),
+        "essay_report": st.session_state.get("last_report"),
+    }
+
+
+def _apply_snapshot(snap):
+    items = snap.get("portfolio_items") or empty_portfolio()
+    st.session_state["portfolio_core_concept"] = snap.get("core_concept", "")
+    st.session_state["portfolio_df"] = pd.DataFrame(items)
+    if "portfolio_editor" in st.session_state:
+        del st.session_state["portfolio_editor"]
+    st.session_state["portfolio_essay_text_input"] = snap.get("essay_text", "")
+    st.session_state["portfolio_items"] = items
+    st.session_state["portfolio_report"] = snap.get("portfolio_report")
+    st.session_state["last_report"] = snap.get("essay_report")
+
+
+def render_version_comparison(versions, names):
+    st.markdown("#### 🔍 결과 비교")
+    cols = st.columns(len(names))
+    for col, name in zip(cols, names):
+        snap = versions[name]
+        pr = snap.get("portfolio_report") or {}
+        er = snap.get("essay_report") or {}
+        summary = pr.get("summary") or {}
+        cohesion = pr.get("cohesion") or {}
+        cov = er.get("portfolio_complementarity") or {}
+        top_matches = er.get("top_matches") or []
+        with col:
+            st.markdown(f"**{name}**")
+            st.caption(snap.get("saved_at", ""))
+            st.markdown(f"- 핵심 개념: {snap.get('core_concept') or '(없음)'}")
+            st.markdown(f"- 포트폴리오 등급: {summary.get('grade', '-')}")
+            st.markdown(f"- 채워진 슬롯: {pr.get('filled_count', '-')}/{PORTFOLIO_SIZE}")
+            if cohesion.get("available"):
+                st.markdown(f"- 개념 이상치: {len(cohesion.get('outliers') or [])}개")
+            if cov:
+                st.markdown(f"- 포트폴리오 커버리지: {cov.get('portfolio_coverage_pct', '-')}%")
+                st.markdown(f"- 에세이 커버리지: {cov.get('essay_coverage_pct', '-')}%")
+            if top_matches:
+                top_txt = ", ".join(f"{m['name']} ({m['match_score']}점)" for m in top_matches[:3])
+                st.markdown(f"- 매칭 Top: {top_txt}")
+            if not pr and not er:
+                st.caption("아직 저장된 평가/매칭 결과가 없습니다.")
+
+
+def render_saved_versions_panel():
+    _init_saved_versions()
+    versions = st.session_state["saved_versions"]
+
+    with st.expander("💾 저장된 버전 관리 (이름 붙여 저장 · 불러오기 · 비교 · 삭제)", expanded=False):
+        st.caption(
+            "핵심 개념·포트폴리오 20슬롯·에세이 텍스트와, 마지막으로 실행한 평가/매칭 결과까지 통째로 이름을 "
+            "붙여 저장합니다. 이 브라우저 세션에만 저장되므로(새로고침·재접속하면 사라짐), 계속 보관하려면 "
+            "아래 '전체 백업 다운로드'로 JSON 파일을 받아두었다가 나중에 업로드해서 복원하세요."
+        )
+
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            new_name = st.text_input("저장할 이름", placeholder="예: ABC", key="save_version_name_input")
+        with col2:
+            st.write("")
+            save_clicked = st.button("현재 상태 저장", width="stretch")
+        if save_clicked:
+            name = new_name.strip()
+            if not name:
+                st.error("저장할 이름을 입력해주세요.")
+            else:
+                overwrite = name in versions
+                snap = _capture_snapshot()
+                snap["saved_at"] = datetime.now().isoformat(timespec="seconds")
+                versions[name] = snap
+                st.success(f"'{name}' {'덮어써서 ' if overwrite else ''}저장했습니다.")
+                st.rerun()
+
+        if versions:
+            st.markdown("---")
+            st.markdown(f"**저장된 버전 ({len(versions)}개)**")
+            for name in list(versions.keys()):
+                snap = versions[name]
+                pr = snap.get("portfolio_report") or {}
+                er = snap.get("essay_report") or {}
+                grade = (pr.get("summary") or {}).get("grade", "-")
+                cov = er.get("portfolio_complementarity") or {}
+                cov_txt = (
+                    f"포트폴리오 {cov['portfolio_coverage_pct']}% / 에세이 {cov['essay_coverage_pct']}%"
+                    if cov else "-"
+                )
+                c1, c2, c3, c4 = st.columns([2.2, 2.8, 1, 1])
+                with c1:
+                    st.markdown(f"**{name}**")
+                    st.caption(snap.get("saved_at", ""))
+                with c2:
+                    st.caption(f"등급: {grade} · 커버리지: {cov_txt}")
+                with c3:
+                    if st.button("불러오기", key=f"load_{name}", width="stretch"):
+                        _apply_snapshot(snap)
+                        st.success(f"'{name}' 불러왔습니다.")
+                        st.rerun()
+                with c4:
+                    if st.button("삭제", key=f"del_{name}", width="stretch"):
+                        del versions[name]
+                        st.rerun()
+
+            st.markdown("---")
+            compare_names = st.multiselect(
+                "비교할 버전 선택 (2개를 고르면 아래에 나란히 비교합니다)",
+                options=list(versions.keys()),
+                max_selections=2,
+                key="compare_version_select",
+            )
+            if len(compare_names) == 2:
+                render_version_comparison(versions, compare_names)
+
+            st.markdown("---")
+            backup_json = json.dumps(versions, ensure_ascii=False, indent=2)
+            st.download_button(
+                "⬇️ 전체 백업 다운로드 (.json)",
+                data=backup_json.encode("utf-8"),
+                file_name="dovamatch_saved_versions.json",
+                mime="application/json",
+                width="stretch",
+            )
+
+        uploaded_backup = st.file_uploader(
+            "⬆️ 백업 파일 복원 (.json) — 동일한 이름이 있으면 덮어씁니다", type=["json"], key="restore_versions_uploader"
+        )
+        if uploaded_backup is not None and st.button("복원 실행", width="stretch"):
+            try:
+                restored = json.loads(uploaded_backup.getvalue().decode("utf-8"))
+                if not isinstance(restored, dict):
+                    raise ValueError("파일 형식이 올바르지 않습니다.")
+                versions.update(restored)
+                st.success(f"{len(restored)}개 버전을 복원했습니다.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"복원 실패: {e}")
+
+
 def render_portfolio_section(backend_name, disabled, portfolio_strategy=None):
     st.markdown("### 🖼️ 포트폴리오 매칭 (20점)")
     st.caption(
@@ -619,6 +783,8 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
         "철학/표현 언어와 비교하고, 포트폴리오와 에세이가 서로의 빈틈을 얼마나 잘 채워주는지 확인합니다."
     )
 
+    render_saved_versions_panel()
+
     with st.expander("⚙️ 임베딩 설정 (기본값 그대로 사용해도 됩니다)"):
         backend_choice = st.selectbox(
             "임베딩 백엔드",
@@ -640,8 +806,9 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
     portfolio_strategy = (admission_info or {}).get("portfolio_strategy")
     render_portfolio_section(backend_name, disabled, portfolio_strategy)
 
-    st.divider()
-    render_image_feedback_section(faculty_data)
+    # 이미지 교수 피드백 기능은 임시 비활성화 (필요 시 재활성화)
+    # st.divider()
+    # render_image_feedback_section(faculty_data)
 
     st.divider()
     st.markdown("### ✍️ 에세이 매칭")
@@ -685,6 +852,7 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
         "SOP 에세이 텍스트",
         height=280,
         placeholder="여기에 Artist's Statement / SOP 에세이 전문을 붙여넣으세요...",
+        key="portfolio_essay_text_input",
     )
 
     if st.button("분석하기", type="primary", disabled=disabled, width="stretch"):
@@ -777,12 +945,26 @@ def render_match_dashboard(faculty_data, alumni_data, admission_info=None):
 def render_admission_info(info):
     st.markdown("## 📋 DoVA 지원 요건")
 
-    st.markdown("### 제출 서류 요건")
+    st.markdown(
+        "### 제출 서류 요건 "
+        '<a href="https://dova.uchicago.edu/graduate/admissions" target="_blank" '
+        'style="font-size:13px;font-weight:400;">(원문 보기 ↗)</a>',
+        unsafe_allow_html=True,
+    )
     for doc in info["required_documents"]:
-        with st.container(border=True):
-            st.markdown(f"**{doc['item']}**")
-            st.write(doc["requirement"])
-            st.caption(f"💡 {doc['tip']}")
+        extra_cls = ""
+        if "GRE" in doc["item"]:
+            extra_cls = " dm-doc-gray"
+        elif "영어자격조건" in doc["item"]:
+            extra_cls = " dm-doc-blue"
+        st.markdown(
+            f'<div class="dm-doc-card{extra_cls}">'
+            f'<div class="dm-doc-title">{doc["item"]}</div>'
+            f'<div class="dm-doc-req">{doc["requirement"]}</div>'
+            f'<div class="dm-doc-tip">💡 {doc["tip"]}</div>'
+            "</div>",
+            unsafe_allow_html=True,
+        )
 
     st.markdown("### 대학원 조교(TA) 영어 자격 요건")
     ta = info["ta_eligibility"]
